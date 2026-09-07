@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0b10" />
+    <meta name="description" content="ScribeForge — иммерсивная писательская мастерская. Работает офлайн, данные хранятся локально." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ScribeForge" />
+    <title>ScribeForge — Писательская мастерская</title>
+
+    <!-- PWA: работает при раздаче по http(s); при открытии одиночного файла просто игнорируется -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+
+    <!-- Шрифты подгружаются, если есть сеть. Без неё приложение работает на системных аналогах. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Marck+Script&family=Caveat:wght@500;600;700&family=Comfortaa:wght@400;500;700&family=Rubik+Mono+One&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=PT+Mono&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Literata:ital,wght@0,400;0,600;1,400&family=Alegreya:ital,wght@0,400;0,700;1,400&family=Yanone+Kaffeesatz:wght@400;600&family=Neucha&family=Bad+Script&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=Spectral:ital,wght@0,400;0,600;1,400&family=Fira+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+
+    <style>
+      /* Экран загрузки — виден до старта React, чтобы не было «белого листа» */
+      #boot {
+        position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+        flex-direction: column; gap: 14px; background: #141018; color: #d8c79a;
+        font-family: Georgia, 'Times New Roman', serif; z-index: 9999; text-align: center; padding: 24px;
+      }
+      #boot .g { font-size: 34px; opacity: .9; animation: bp 1.6s ease-in-out infinite; }
+      #boot .t { font-size: 12px; letter-spacing: .34em; text-transform: uppercase; opacity: .65; }
+      #boot .m { font-size: 12.5px; line-height: 1.6; max-width: 460px; opacity: .8; display: none; }
+      #boot.err .g { animation: none; }
+      #boot.err .m { display: block; }
+      @keyframes bp { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <div id="boot">
+      <div class="g">&#10086;</div>
+      <div class="t">ScribeForge</div>
+      <div class="m"></div>
+    </div>
+
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!--
+      Страховочный запуск (классический скрипт, выполняется всегда).
+      Некоторые браузеры блокируют ES-модули при открытии файла напрямую (file://).
+      Если модуль не стартовал — исполняем тот же код как обычный скрипт.
+    -->
+    <script>
+      (function () {
+        var started = false;
+
+        function showError(msg) {
+          var b = document.getElementById('boot');
+          if (!b) return;
+          b.className = 'err';
+          b.querySelector('.g').innerHTML = '&#9888;';
+          b.querySelector('.m').textContent = msg;
+        }
+
+        function rendered() {
+          var r = document.getElementById('root');
+          return !!r && r.childElementCount > 0;
+        }
+
+        function boot() {
+          // если модуль отработал — он выставил флаг, повторный запуск недопустим
+          if (started || window.__SF_BOOTED__ || rendered()) return;
+          started = true;
+          var tag = null, all = document.getElementsByTagName('script');
+          for (var i = 0; i < all.length; i++) {
+            if (all[i].type === 'module' && all[i].textContent && all[i].textContent.length > 2000) {
+              tag = all[i]; break;
+            }
+          }
+          if (!tag) {
+            showError('Код приложения не найден. Скачайте файл index.html целиком и откройте его заново.');
+            return;
+          }
+          try {
+            (0, eval)(tag.textContent);
+          } catch (e) {
+            showError('Не удалось запустить приложение: ' + (e && e.message ? e.message : e)
+              + '. Попробуйте открыть файл в Chrome, Edge или Firefox.');
+            return;
+          }
+          setTimeout(function () {
+            if (!rendered()) showError('Приложение не отрисовалось. Обновите страницу (F5).');
+          }, 900);
+        }
+
+        function schedule() { setTimeout(boot, 120); }
+        if (document.readyState === 'loading') {
+          window.addEventListener('DOMContentLoaded', schedule);
+        } else {
+          schedule();
+        }
+
+        // Регистрация service worker — только при раздаче по http/https
+        if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+          window.addEventListener('load', function () {
+            navigator.serviceWorker.register('sw.js').catch(function () { /* PWA недоступна — не критично */ });
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
