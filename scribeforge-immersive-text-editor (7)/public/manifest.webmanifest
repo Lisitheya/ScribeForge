@@ -1,0 +1,35 @@
+{
+  "name": "ScribeForge — Писательская мастерская",
+  "short_name": "ScribeForge",
+  "description": "Иммерсивный текстовый редактор: скины эпох, генератор имён, счётчики, книжный экспорт. Работает офлайн.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#141018",
+  "theme_color": "#0b0b10",
+  "categories": ["productivity", "books", "utilities"],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
